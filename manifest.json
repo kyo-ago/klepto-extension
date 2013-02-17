@@ -1,0 +1,14 @@
+{
+	"name": "Klepto-extension",
+	"version": "0.1",
+	"manifest_version": 2,
+	"minimum_chrome_version": "25",
+	"icons": {
+		"16": "/img/logo.png",
+		"128": "/img/logo.png"
+	},
+	"devtools_page": "/html/devtools.html",
+	"permissions": [
+		"http://*/*",
+	]
+}
