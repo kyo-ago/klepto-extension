@@ -8,7 +8,16 @@
 		"128": "/img/logo.png"
 	},
 	"devtools_page": "/html/devtools.html",
+	"background": {
+		"scripts": [
+			"/lib/jsdeferred.js",
+			"/src/lib.js",
+			"/src/background.js"
+		]
+	},
 	"permissions": [
-		"http://*/*",
+		"http://*/",
+		"storage",
+		"proxy"
 	]
 }

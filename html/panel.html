@@ -1,7 +1,27 @@
 <html>
 <head>
+<script src="/lib/jquery.js"></script>
+<script src="/lib/jsdeferred.js"></script>
+<script src="/src/lib.js"></script>
 <script src="/src/panel.js"></script>
 </head>
 <body>
+
+<div>
+
+<form id="settings">
+
+Klepto server[domain:port]<input type="text" id="api_server" value="127.0.0.1:24888"><span class="status"></span><br>
+
+change proxy setting<input type="checkbox" id="proxy_mode"><span class="status"></span><br>
+<!-- <textarea id="pac_script"></textarea><br> -->
+
+<input type="submit">
+<input type="reset">
+
+</form>
+
+</div>
+
 </body>
 </html>

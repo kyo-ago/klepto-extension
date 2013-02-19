@@ -1,7 +1,17 @@
+/**
+ * @license Klepto proxy
+ * Copyright (C) 2013 @kyo_ago https://github.com/kyo-ago/klepto
+ * License: GPL
+ */
+
+'use strict';
+
 chrome.devtools.panels.create(' Klepto ', '/img/logo.png', '/html/panel.html', function(panel){
 	panel.onShown.addListener(function (win) {
+		win.onShown();
 	});
 });
+
 var enable_auto_save = false;
 chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(evn, text) {
 	if (!enable_auto_save) {
