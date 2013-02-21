@@ -2,7 +2,7 @@
 	"name": "Klepto-extension",
 	"version": "0.1",
 	"manifest_version": 2,
-	"minimum_chrome_version": "25",
+	"minimum_chrome_version": "22",
 	"icons": {
 		"16": "/img/logo.png",
 		"128": "/img/logo.png"
@@ -16,7 +16,6 @@
 		]
 	},
 	"permissions": [
-		"http://*/",
 		"storage",
 		"proxy"
 	]

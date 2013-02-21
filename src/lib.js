@@ -13,13 +13,17 @@ utils.onCommandsMessage = function (commands) {
 			alert(chrome.extension.lastError);
 			return false;
 		}
-		if (!commands[message.command]) {
+		if (!commands[message['command']]) {
 			alert('illegal command');
 			return false;
 		}
-		var command = message.command;
-		delete message.command;
+		var command = message['command'];
+		delete message['command'];
 		commands[command](message, sendResponse);
 		return true;
 	});
+};
+utils.sendMessage = function (command, param, callback) {
+	param['command'] = command;
+	chrome.extension.sendMessage(param, callback);
 };

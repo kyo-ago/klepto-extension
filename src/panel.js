@@ -6,7 +6,7 @@
 
 'use strict';
 
-window.onShown = function (param) {
+window.onShown = function () {
 	Deferred.parallel({
 		'proxy' : getProxySettings,
 		'storage' : loadStorage
@@ -47,13 +47,8 @@ function saveStorage (data) {
 
 function getProxySettings () {
 	var defer = Deferred();
-	sendMessage('getProxySettings', {}, defer.call.bind(defer));
+	utils.sendMessage('getProxySettings', {}, defer.call.bind(defer));
 	return defer;
-}
-
-function sendMessage (command, param, callback) {
-	param['command'] = command;
-	chrome.extension.sendMessage(param, callback);
 }
 
 jQuery.fn.applaySettings = function () {
@@ -66,7 +61,7 @@ jQuery.fn.applaySettings = function () {
 		});
 
 		if (!$('#proxy_mode').attr('checked')) {
-			sendMessage('clearProxySettings', {}, save);
+			utils.sendMessage('clearProxySettings', {}, save);
 			return;
 		}
 		var api_server = $('#api_server').val().split(':');
@@ -75,7 +70,7 @@ jQuery.fn.applaySettings = function () {
 			'host' : api_server.shift(),
 			'port' : parseInt(api_server.shift())
 		};
-		sendMessage('setProxySettings', {
+		utils.sendMessage('setProxySettings', {
 			'value' : {
 				'mode' : 'fixed_servers',
 				'rules' : {
