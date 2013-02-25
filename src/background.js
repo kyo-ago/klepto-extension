@@ -6,14 +6,7 @@
 
 'use strict';
 
-var ws = new WebSocket('ws://127.0.0.1:24888/');
-ws.onmessage = function(data) {
-	var param = JSON.stringify(data);
-	if (param.type !== 'message') {
-		return;
-	}
-	console.log(param.message);
-};
+var ws;
 utils.onCommandsMessage({
 	'getProxySettings' : function (param, callback) {
 		chrome.proxy.settings.get(param || {}, callback);
@@ -24,7 +17,23 @@ utils.onCommandsMessage({
 	'clearProxySettings' : function (param, callback) {
 		chrome.proxy.settings.clear(param || {}, callback);
 	},
-	'onResourceContentCommitted' : function (param) {
+	'startConnection' : function (param, callback) {
+		ws && ws.close();
+		ws = new WebSocket('ws://' + param.apiServer + '/');
+		ws.onopen = callback;
+	},
+	'getConnectionStatus' : function (param, callback) {
+		callback(ws ? ws.readyState : WebSocket.CLOSED);
+	},
+	'stopConnection' : function (param, callback) {
+		ws && ws.close();
+		ws = undefined;
+	},
+	'consoledebug' : function (param) {
+		consoledebug(param)
+	},
+	'onResourceContentCommitted' : function (param, callback) {
+		ws.onopen = callback;
 		ws.send(JSON.stringify({
 			'type' : 'save',
 			'file' : {

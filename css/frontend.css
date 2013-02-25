@@ -1,0 +1,92 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+html, body {
+	height: 100%;;
+}
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+#menu {
+	border: solid 1px black;
+}
+#menu li {
+	width: 33%;
+	display: inline-block;
+	border: solid 1px black;
+	margin: 0 -0.2em;
+	text-align: center;
+}
+#menu li:last-child {
+	width: 34%;
+}
+#menu label {
+	display: inline-block;
+	width: 100%;
+}
+
+#view, .tab {
+	overflow: hidden;
+	height: 90%;
+}
+
+#networkListTab > div {
+	width: 50%;
+	display: inline-block;
+	border: solid 1px black;
+	margin: 0 -0.2em;
+	height: 100%;
+}
+#networkListTab #connectLog {
+	overflow: scroll;
+}
+#networkListTab #connectLog a {
+	display: inline-block;
+	width: 100%;
+}
+#networkListTab #inspector {
+	overflow: hidden;
+}
+#networkListTab #inspector > * {
+	overflow: scroll;
+	height: 50%;
+	width: 100%;
+}
+
+.selected {
+	background-color: highlight;
+	color: highlighttext;
+}
+.dragstart {
+	opacity: 0.4;
+}
+.dragenter {
+	border: 2px dashed #000;
+}
+
+.alert, .alert-success {
+	color: red;
+}
+.alert-success {
+	opacity: 0;
+	visibility: hidden;
+}
+.fadeout {
+	-webkit-animation-iteration-count: 1;
+	-webkit-animation-direction: normal;
+	-webkit-animation-duration: 2s;
+	-webkit-animation-timing-function: linear;
+	-webkit-animation-name: fadeout;
+}
+@-webkit-keyframes fadeout {
+	0%    {
+		opacity: 1;
+		visibility: visible;
+	}
+	100%  {
+		opacity: 0;
+		visibility: hidden;
+	}
+}

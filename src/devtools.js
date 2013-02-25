@@ -20,7 +20,5 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
 		};
 	 */
 	evn.text = text;
-	utils.sendMessage('onResourceContentCommitted', evn, function () {
-		alert('save');
-	});
+	utils.sendMessage('onResourceContentCommitted', evn, function () {});
 });

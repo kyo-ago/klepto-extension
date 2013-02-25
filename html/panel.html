@@ -1,27 +1,33 @@
-<html>
+<html ng-csp ng-app>
 <head>
+<link rel="stylesheet" href="/css/frontend.css">
 <script src="/lib/jquery.js"></script>
+<script src="/lib/angular.js"></script>
 <script src="/lib/jsdeferred.js"></script>
 <script src="/src/lib.js"></script>
 <script src="/src/panel.js"></script>
 </head>
 <body>
 
-<div>
+<div ng-controller="appExtension">
 
-<form id="settings">
+<form ng-submit="save()">
 
-Klepto server[domain:port]<input type="text" id="api_server" value="127.0.0.1:24888"><span class="status"></span><br>
+Klepto server[domain:port]<input type="text" ng-model="apiServer">
+<span ng-show="apiServerStatus">{{apiServerStatus}}</span><br>
 
-change proxy setting<input type="checkbox" id="proxy_mode"><span class="status"></span><br>
-<!-- <textarea id="pac_script"></textarea><br> -->
+change proxy setting<input type="checkbox" ng-model="changeProxy" ng-readonly="proxyDisable">
+<span ng-show="proxyStatus">{{proxyStatus}}</span><br>
 
-<input type="submit">
-<input type="reset">
+<input type="submit" value="Save">
+<input type="reset" value="Reset" ng-click="reset()">
+<span ng-class="save_success" class="alert-success">Save success.</span>
 
 </form>
 
-</div>
+<div ng-show="ApiServerStatus">{{ApiServerStatus}}</div>
+
+<!-- /ng-controller="appExtension" --></div>
 
 </body>
 </html>
