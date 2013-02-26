@@ -15,6 +15,7 @@
 			"/src/background.js"
 		]
 	},
+	"options_page" : "/html/options.html",
 	"permissions": [
 		"storage",
 		"proxy"

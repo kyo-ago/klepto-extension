@@ -17,8 +17,7 @@ var init_defers = {
 function appExtension ($scope) {
 	init_defers.ng.call($scope);
 }
-
-window.onShown = utils.sendMessage.bind(utils, 'getProxySettings', {}, function (param) {
+utils.sendMessage('getProxySettings', {}, function (param) {
 	init_defers.ch.call(param);
 });
 Deferred.parallel(init_defers).next(function (param) {

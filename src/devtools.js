@@ -6,12 +6,6 @@
 
 'use strict';
 
-chrome.devtools.panels.create(' Klepto ', '/img/logo.png', '/html/panel.html', function(panel){
-	panel.onShown.addListener(function (win) {
-		win.onShown();
-	});
-});
-
 chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(evn, text) {
 	/*
 		evn = {
