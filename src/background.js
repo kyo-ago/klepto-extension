@@ -7,6 +7,9 @@
 'use strict';
 
 var ws;
+function pageReload (param, ws) {
+	chrome.tabs.reload();
+}
 utils.onCommandsMessage({
 	'getProxySettings' : function (param, callback) {
 		chrome.proxy.settings.get(param || {}, callback);
@@ -21,6 +24,18 @@ utils.onCommandsMessage({
 		ws && ws.close();
 		ws = new WebSocket('ws://' + param.apiServer + '/');
 		ws.onopen = callback;
+		ws.onmessage = function (evn) {
+			var param = JSON.parse(evn.data);
+			if (!param.type) {
+				return;
+			}
+			if (param.type === 'message') {
+				console.debug(param.message);
+			}
+			if (param.type === 'command') {
+				pageReload(param, ws);
+			}
+		};
 	},
 	'getConnectionStatus' : function (param, callback) {
 		callback(ws ? ws.readyState : WebSocket.CLOSED);
