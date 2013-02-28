@@ -13,6 +13,10 @@ var DefaultSettings = {
 	'proxyHost' : '127.0.0.1',
 	'proxyPort' : 8888
 };
+var global = this;
+global.WS = {};
+global.proxy = {};
+global.storage = {};
 function getStorage () {
 	var defer = Deferred();
 	chrome.storage.local.get(function (storage) {
@@ -27,19 +31,28 @@ function getStorage () {
 				alert(chrome.extension.lastError);
 				return;
 			}
-			defer.call(storage);
+			global.storage = storage;
+			defer.call();
 		});
 	});
 	return defer;
 }
-function connectionServer (storage) {
-	if (storage.disableServer) {
+function reconnectServer () {
+	connectionServer();
+}
+function connectionServer () {
+	if (global.storage.disableServer) {
 		return;
 	}
 	var defer = Deferred();
-	var ws = new WebSocket('ws://' + storage.apiServer + '/');
-	ws.addEventListener('open', defer.call.bind(defer, ws));
-	ws.addEventListener('message', function (evn) {
+	if (global.WS) {
+		global.WS.close();
+		global.WS = undefined;
+	}
+	global.WS = new WebSocket('ws://' + global.storage.apiServer + '/');
+	global.WS.addEventListener('open', defer.call.bind(defer, ws));
+	global.WS.addEventListener('close', reconnectServer);
+	global.WS.addEventListener('message', function (evn) {
 		var data = JSON.parse(evn.data);
 		if (data.type === 'command' && data.command === 'pageReload') {
 			chrome.tabs.reload();
@@ -49,25 +62,28 @@ function connectionServer (storage) {
 }
 function getProxy () {
 	var defer = Deferred();
-	chrome.proxy.settings.get({}, defer.call.bind(defer));
+	chrome.proxy.settings.get({}, function (proxy) {
+		global.proxy = proxy;
+		defer.call();
+	});
 	return defer;
 }
-function setProxy (storage, proxy) {
-	if (storage.disableProxy) {
+function setProxy () {
+	if (global.storage.disableProxy) {
 		return;
 	}
-	if (proxy.levelOfControl === 'not_controllable') {
+	if (global.proxy.levelOfControl === 'not_controllable') {
 		return;
 	}
-	if (proxy.levelOfControl === 'controlled_by_this_extension') {
+	if (global.proxy.levelOfControl === 'controlled_by_this_extension') {
 		return;
 	}
 	var defer = Deferred();
 	var rules = {
 		'proxyForHttp' : {
 			'scheme' : 'http',
-			'host' : storage.proxyHost,
-			'port' : parseInt(storage.proxyPort)
+			'host' : global.storage.proxyHost,
+			'port' : parseInt(global.storage.proxyPort)
 		}
 	};
 	chrome.proxy.settings.set({
@@ -78,8 +94,8 @@ function setProxy (storage, proxy) {
 	}, defer.call.bind(defer));
 	return defer;
 }
-function sendMessage (socket, message, sender, sendResponse) {
-	if (!socket) {
+function sendMessage (message) {
+	if (!global.WS) {
 		return false;
 	}
 	if (chrome.extension.lastError) {
@@ -89,43 +105,28 @@ function sendMessage (socket, message, sender, sendResponse) {
 	if (message['command'] !== 'saveFile') {
 		return false;
 	}
-	socket.addEventListener('message', function (evn) {
-		var data = JSON.parse(evn.data);
-		if (data.type === 'command' && data.command === 'saveSuccess') {
-			sendResponse(data);
-		}
-	});
-	socket.send(JSON.stringify({
+	global.WS.send(JSON.stringify({
 		'type' : 'save',
 		'file' : {
 			'path' : message.file.url,
 			'data' : message.file.text
 		}
 	}));
-	return true;
+	return false;
 }
-
-function Initialize (self) {
-	return Deferred.next(getStorage).next(function (storage) {
-		var defer = Deferred();
-		if (self.WS) {
-			self.WS.close();
-			self.WS = undefined;
-		}
-		Deferred.parallel({
-			'socket' : connectionServer.bind(this, storage),
+function onMessageListener () {
+	chrome.extension.onMessage.addListener(sendMessage.bind(this));
+}
+function Initialize () {
+	return Deferred.next(getStorage).next(function () {
+		return Deferred.parallel({
+			'socket' : connectionServer.bind(self),
 			'proxy' : function () {
-				return getProxy(storage)
-					.next(setProxy.bind(this, storage))
+				return getProxy()
+					.next(setProxy.bind(self))
 				;
 			}
-		}).next(function (result) {
-			self.WS = result.socket;
-			defer.call(result);
-		});
-		return defer;
-	}).next(function (param) {
-		chrome.extension.onMessage.addListener(sendMessage.bind(this, param.socket));
+		}).next(onMessageListener);
 	});
 }
-Initialize(this);
+Initialize();
