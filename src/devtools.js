@@ -14,5 +14,8 @@ chrome.devtools.inspectedWindow.onResourceContentCommitted.addListener(function(
 		};
 	 */
 	evn.text = text;
-	utils.sendMessage('onResourceContentCommitted', evn, function () {});
+	chrome.extension.sendMessage({
+		'command' : 'saveFile',
+		'file' : evn
+	});
 });

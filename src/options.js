@@ -10,158 +10,81 @@ Deferred.onerror = function (e) {
 	console.debug([e], e.stack);
 };
 
-var init_defers = {
-	'ng' : Deferred(),
-	'ch' : Deferred()
-};
-function appExtension ($scope) {
-	init_defers.ng.call($scope);
+function makeInitDefers () {
+	var defers = {
+		'$scope' : Deferred(),
+		'bg' : Deferred(),
+		'stor' : Deferred(),
+		'proxy' : Deferred()
+	};
+	angular.module('ng').controller('appExtension', ['$scope', function ($scope) {
+		defers.$scope.call($scope);
+	}]);
+	chrome.runtime.getBackgroundPage(defers.bg.call.bind(defers.bg));
+	chrome.storage.local.get(defers.stor.call.bind(defers.stor));
+	chrome.proxy.settings.get({}, defers.proxy.call.bind(defers.proxy));
+	return defers;
 }
-utils.sendMessage('getProxySettings', {}, function (param) {
-	init_defers.ch.call(param);
-});
-Deferred.parallel(init_defers).next(function (param) {
-	var $scope = param.ng;
-	var proxy = param.ch;
-	$scope.apiServer = '127.0.0.1:8888';
-	$scope.intervalTime = 1000;
-	$scope.changeProxy = true;
-	$scope.proxyDisable = false;
-	$scope.apiServerStatus = undefined;
-	$scope.proxyStatus = undefined;
+function initValue ($scope, storage) {
+	$scope.apiServer = storage.apiServer;
+	$scope.proxyServer = storage.proxyHost + ':' + storage.proxyPort;
+	$scope.disableServer = storage.disableServer;
+	$scope.disableProxy = storage.disableProxy;
+}
 
-	window.onShown = function () {
-		utils.sendMessage('getProxySettings', {}, $scope.changeProxyStatus);
+Deferred.parallel(makeInitDefers()).next(function (param) {
+	var $scope = param.$scope;
+	var background = param.bg;
+	var storage = param.stor;
+	var proxy = param.proxy;
+
+	initValue($scope, storage);
+
+	$scope.changeProxy = function (proxy) {
+		if (proxy.levelOfControl !== 'not_controllable') {
+			return;
+		}
+		$scope.proxyStatus = 'not controllable by this extension';
+		$scope.proxyReadony = true;
+		$scope.disableProxy = false;
 	};
-	$scope.save = function () {
-		var param = {
-			'apiServer' : $scope.apiServer,
-			'changeProxy' : $scope.changeProxy
-		};
-		$scope.setStorage(param)
-			.next($scope.applayProxySettings.bind($scope, param))
-			.next($scope.startConnection.bind($scope, param))
-			.next($scope.$apply.bind($scope, 'save_success="fadeout"'))
-		;
-	};
-	$scope.reset = function () {
-		$scope.getStorage.next(function (storage) {
-			['apiServer', 'changeProxy'].forEach(function (key) {
-				if (key in storage) {
-					$scope[key] = storage[key];
-				}
-			});
-			$scope.$apply();
+	$scope.checkWSState = function () {
+		var readyState = background.WS.readyState;
+		Object.keys(WebSocket).filter(function (key) {
+			return WebSocket[key] === readyState;
+		}).forEach(function (state) {
+			$scope.$apply('ApiServerStatus="Klepto server states ' + state + '"');
 		});
-	};
-	$scope.getStorage = function () {
-		var defer = Deferred();
-		chrome.storage.local.get(function(storage) {
-			if (chrome.runtime.lastError) {
-				alert(chrome.extension.lastError);
-				defer.fail();
-				return;
-			}
-			defer.call(storage);
-		});
-		return defer;
 	};
 	$scope.setStorage = function (param) {
 		var defer = Deferred();
 		chrome.storage.local.set(param, function() {
 			if (chrome.runtime.lastError) {
 				alert(chrome.extension.lastError);
-				defer.fail();
 				return;
 			}
 			defer.call();
 		});
 		return defer;
 	};
-
-	$scope.applayProxySettings = function (param) {
-		var defer = Deferred();
-
-		if (!param.changeProxy) {
-			$scope.disableProxy().next(defer.call.bind(defer));
-			return;
-		}
-		var api_server = param.apiServer.split(':');
-		var proxyForHttp = {
-			'scheme' : 'http',
-			'host' : api_server.shift(),
-			'port' : parseInt(api_server.shift())
-		};
-		utils.sendMessage('setProxySettings', {
-			'value' : {
-				'mode' : 'fixed_servers',
-				'rules' : {
-					'proxyForHttp' : proxyForHttp
-				}
-			}
-		}, defer.call.bind(defer));
-
-		return defer;
-	};
-	$scope.disableProxy = function () {
-		var defer = Deferred();
-
-		utils.sendMessage('clearProxySettings', {}, function () {
-			utils.sendMessage('stopConnection', {}, function () {
-				defer.call();
-			});
-		});
-
-		return defer;
-	};
-	$scope.changeProxyStatus = function (param) {
-		if (param.levelOfControl === 'not_controllable') {
-			$scope.proxyStatus = 'not controllable by this extension';
-			$scope.proxyDisable = true;
-			$scope.changeProxy = false;
-		}
-		if (param.levelOfControl === 'controlled_by_this_extension') {
-			$scope.changeProxy = true;
-		}
-	};
-	$scope.startConnection = function (param) {
-		var defer = Deferred();
-		utils.sendMessage('startConnection', param, defer.call.bind(defer));
-		return defer;
-	};
-	$scope.checkConnection = function () {
-		$scope.intervalId && clearInterval($scope.intervalId);
-		$scope.intervalId = setInterval(function () {
-			utils.sendMessage('getConnectionStatus', {}, function (readyState) {
-				Object.keys(WebSocket).filter(function (key) {
-					return WebSocket[key] === readyState;
-				}).forEach(function (state) {
-					$scope.$apply('ApiServerStatus="Klepto server states ' + state + '"');
-				});
-			});
-		}, $scope.intervalTime);
-	};
-	$scope.initSettings = function () {
-		if (!$scope.apiServer) {
-			return;
-		}
-		$scope.getStorage().next(function (storage) {
-			if (!storage) {
-				return;
-			}
-			['apiServer', 'changeProxy'].forEach(function (key) {
-				if (key in storage) {
-					$scope[key] = storage[key];
-				}
-			});
-			$scope.startConnection({
-				apiServer : storage.apiServer
-			}).next($scope.checkConnection);
+	$scope.save = function () {
+		var proxyServer = $scope.proxyServer.split(':');
+		$scope.setStorage({
+			'disableServer' : $scope.disableServer,
+			'disableProxy' : $scope.disableProxy,
+			'apiServer' : $scope.apiServer,
+			'proxyHost' : proxyServer[0],
+			'proxyPort' : proxyServer[1]
+		}).next(background.Initialize).next(function () {
+			$scope.$apply('save_success="fadeout"');
 		});
 	};
-	$scope.changeProxyStatus(proxy);
-	$scope.initSettings();
+	$scope.reset = function () {
+		chrome.storage.local.get(initValue.bind(this, $scope));
+	};
 
+	$scope.changeProxy(proxy);
+	$scope.interval = setInterval($scope.checkWSState, 5000);
 	if (!$scope.$$phase) {
 		$scope.$apply();
 	}

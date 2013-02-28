@@ -5,7 +5,6 @@
 <script src="/lib/jquery.js"></script>
 <script src="/lib/angular.js"></script>
 <script src="/lib/jsdeferred.js"></script>
-<script src="/src/lib.js"></script>
 <script src="/src/options.js"></script>
 </head>
 <body>
@@ -16,9 +15,11 @@
 
 Klepto server[domain:port]<input type="text" ng-model="apiServer">
 <span ng-show="apiServerStatus">{{apiServerStatus}}</span><br>
+disable server connection<input type="checkbox" ng-model="disableServer" ng-readonly="serverReadony"><br>
 
-change proxy setting<input type="checkbox" ng-model="changeProxy" ng-readonly="proxyDisable">
+Proxy server[domain:port]<input type="text" ng-model="proxyServer">
 <span ng-show="proxyStatus">{{proxyStatus}}</span><br>
+disable proxy chenge<input type="checkbox" ng-model="disableProxy" ng-readonly="proxyReadony"><br>
 
 <input type="submit" value="Save">
 <input type="reset" value="Reset" ng-click="reset()">
