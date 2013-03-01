@@ -4,7 +4,7 @@
  * License: GPL
  */
 
-'use strict';
+var global = this;
 
 var DefaultSettings = {
 	'disableProxy' : false,
@@ -13,7 +13,6 @@ var DefaultSettings = {
 	'proxyHost' : '127.0.0.1',
 	'proxyPort' : 8888
 };
-var global = this;
 global.WS = {};
 global.proxy = {};
 global.storage = {};
@@ -38,26 +37,27 @@ function getStorage () {
 	return defer;
 }
 function reconnectServer () {
-	connectionServer();
+	setTimeout(connectionServer, 1000);
 }
 function connectionServer () {
 	if (global.storage.disableServer) {
 		return;
 	}
 	var defer = Deferred();
-	if (global.WS) {
+	if (global.WS && global.WS.close) {
 		global.WS.close();
 		global.WS = undefined;
+		return;
 	}
 	global.WS = new WebSocket('ws://' + global.storage.apiServer + '/');
-	global.WS.addEventListener('open', defer.call.bind(defer, ws));
-	global.WS.addEventListener('close', reconnectServer);
-	global.WS.addEventListener('message', function (evn) {
+	global.WS.onopen = defer.call.bind(defer, WS);
+	global.WS.onclose = reconnectServer;
+	global.WS.onmessage = function (evn) {
 		var data = JSON.parse(evn.data);
 		if (data.type === 'command' && data.command === 'pageReload') {
 			chrome.tabs.reload();
 		}
-	});
+	};
 	return defer;
 }
 function getProxy () {
