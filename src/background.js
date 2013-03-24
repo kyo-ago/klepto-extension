@@ -11,7 +11,8 @@ var DefaultSettings = {
 	'disableServer' : false,
 	'apiServer' : '127.0.0.1:8888',
 	'proxyHost' : '127.0.0.1',
-	'proxyPort' : 8888
+	'proxyPort' : 8888,
+	'enableTab' : {}
 };
 global.WS = {};
 global.proxy = {};
@@ -68,6 +69,23 @@ function getProxy () {
 	});
 	return defer;
 }
+function toggleProxyTab (tab) {
+	var id = tab.id;
+	var enableTab = global.storage.enableTab;
+	enableTab[id] = !enableTab[id];
+	toggleProxy(enableTab[id]);
+}
+function onSelectionChanged () {
+	chrome.tabs.onSelectionChanged.addListener(function (tabId) {
+		toggleProxy(global.storage.enableTab[tabId]);
+	});
+}
+function toggleProxy (enabled) {
+	chrome.browserAction. setBadgeText({
+		'text' : enabled ? '        ' : ''
+	});
+	enabled ? setProxy() : clearProxy();
+}
 function setProxy () {
 	if (global.storage.disableProxy) {
 		return;
@@ -94,6 +112,9 @@ function setProxy () {
 	}, defer.call.bind(defer));
 	return defer;
 }
+function clearProxy () {
+	chrome.proxy.settings.clear({});
+}
 function sendMessage (message) {
 	if (!global.WS) {
 		return false;
@@ -118,13 +139,16 @@ function onMessageListener () {
 	chrome.extension.onMessage.addListener(sendMessage.bind(this));
 }
 function Initialize () {
+	chrome.browserAction.setBadgeBackgroundColor({
+		'color' : [255, 0, 0, 255]
+	});
 	return Deferred.next(getStorage).next(function () {
 		return Deferred.parallel({
 			'socket' : connectionServer.bind(self),
 			'proxy' : function () {
-				return getProxy()
-					.next(setProxy.bind(self))
-				;
+				var defer = getProxy();
+				onSelectionChanged();
+				return defer;
 			}
 		}).next(onMessageListener);
 	});

@@ -1,12 +1,20 @@
 {
 	"name": "Klepto-extension",
-	"version": "1.6",
+	"version": "1.7",
 	"manifest_version": 2,
 	"minimum_chrome_version": "25",
 	"icons": {
 		"16": "/img/icon16.png",
 		"48": "/img/icon48.png",
 		"128": "/img/icon128.png"
+	},
+	"browser_action" : {
+		"default_icon" : {
+			"19": "/img/icon16.png",
+			"38": "/img/icon48.png"
+		},
+		"default_title": "Klepto-extension",
+		"default_popup": "/html/popup.html"
 	},
 	"devtools_page": "/html/devtools.html",
 	"background": {
